@@ -7,7 +7,7 @@ import (
 )
 
 type Storage struct {
-	db *gorm.DB
+	DB *gorm.DB
 }
 
 func NewStorage(engine string, port int, dbName string,
@@ -19,23 +19,23 @@ func NewStorage(engine string, port int, dbName string,
 		return nil, err
 	}
 	s := new(Storage)
-	s.db = db
+	s.DB = db
 	return s, err
 }
 
 func (p *Storage) Close() {
-	_ = p.db.Close()
+	_ = p.DB.Close()
 }
 
 func (p *Storage) Search(dbType interface{}, params map[string]string, needCount bool, preLoads []string, data interface{}) (int, error) {
-	queryDb := p.db.Model(dbType)
+	queryDb := p.DB.Model(dbType)
 	//if preLoads != "" {
 	//	queryDb = queryDb.Preload(preLoads)
 	//}
 	for _, load := range preLoads {
 		queryDb = queryDb.Preload(load)
 	}
-	queryDb, q := convertParams2DbQuery(queryDb, params)
+	queryDb, q := ConvertParams2DbQuery(queryDb, params)
 	c := 0
 	if needCount {
 		queryDb = queryDb.Count(&c)
@@ -45,13 +45,13 @@ func (p *Storage) Search(dbType interface{}, params map[string]string, needCount
 }
 
 func (p *Storage) SaveOrCreate(params map[string]string, data interface{}) error {
-	queryDb, _ := convertParams2DbQuery(p.db, params)
+	queryDb, _ := ConvertParams2DbQuery(p.DB, params)
 	return queryDb.FirstOrCreate(data).Error
 }
 
 func (p *Storage) Delete(dbType interface{}, params map[string]string) (rowsAffected int64, err error) {
-	queryDb := p.db.Model(dbType)
-	queryDb, q := convertParams2DbQuery(queryDb, params)
+	queryDb := p.DB.Model(dbType)
+	queryDb, q := ConvertParams2DbQuery(queryDb, params)
 	finalDb := addAssistQuery(queryDb, q).Delete(dbType)
 	err = finalDb.Error
 	rowsAffected = finalDb.RowsAffected
@@ -59,5 +59,5 @@ func (p *Storage) Delete(dbType interface{}, params map[string]string) (rowsAffe
 }
 
 func (p *Storage) Update(data interface{}) error {
-	return p.db.Update(data).Error
+	return p.DB.Update(data).Error
 }

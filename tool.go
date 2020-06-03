@@ -6,36 +6,36 @@ import (
 	"strings"
 )
 
-type query struct {
-	sortBy string
-	order  string
-	offset int
-	limit  int
+type Query struct {
+	SortBy string
+	Order  string
+	Offset int
+	Limit  int
 }
 
 // 转化请求的参数变成查询
 // 把判断操作都直接放入到查询中
 // 把 limit offset order 这些操作提取出来
-func convertParams2DbQuery(initQuery *gorm.DB, params map[string]string) (*gorm.DB, query) {
-	q := query{}
+func ConvertParams2DbQuery(initQuery *gorm.DB, params map[string]string) (*gorm.DB, Query) {
+	q := Query{}
 	if sortBy, ok := params["sort_by"]; ok {
-		q.sortBy = sortBy
+		q.SortBy = sortBy
 		delete(params, "sort_by")
 	}
 	if order, ok := params["order"]; ok {
-		q.order = order
+		q.Order = order
 		delete(params, "order")
 	}
 	if index, ok := params["index"]; ok {
-		q.offset, _ = strconv.Atoi(index)
+		q.Offset, _ = strconv.Atoi(index)
 		delete(params, "index")
 	}
 	if offset, ok := params["offset"]; ok {
-		q.offset, _ = strconv.Atoi(offset)
+		q.Offset, _ = strconv.Atoi(offset)
 		delete(params, "offset")
 	}
 	if limit, ok := params["limit"]; ok {
-		q.limit, _ = strconv.Atoi(limit)
+		q.Limit, _ = strconv.Atoi(limit)
 		delete(params, "limit")
 	}
 
@@ -103,15 +103,15 @@ func convertParams2DbQuery(initQuery *gorm.DB, params map[string]string) (*gorm.
 }
 
 // 执行order limit offset 这些辅助操作
-func addAssistQuery(initQuery *gorm.DB, q query) *gorm.DB {
-	if q.sortBy != "" {
-		initQuery = initQuery.Order(q.sortBy + " " + q.order)
+func addAssistQuery(initQuery *gorm.DB, q Query) *gorm.DB {
+	if q.SortBy != "" {
+		initQuery = initQuery.Order(q.SortBy + " " + q.Order)
 	}
-	if q.offset != 0 {
-		initQuery = initQuery.Offset(q.offset)
+	if q.Offset != 0 {
+		initQuery = initQuery.Offset(q.Offset)
 	}
-	if q.limit != 0 {
-		initQuery = initQuery.Limit(q.limit)
+	if q.Limit != 0 {
+		initQuery = initQuery.Limit(q.Limit)
 	}
 	return initQuery
 }
