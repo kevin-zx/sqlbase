@@ -1,6 +1,7 @@
 package sqlbase
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -42,6 +43,32 @@ func (p *Storage) Search(dbType interface{}, params map[string]string, needCount
 	}
 	err := addAssistQuery(queryDb, q).Find(data).Error
 	return c, err
+}
+
+// RawScan this method can execute raw sql and use the scan function to scan rows
+// this can package many are easy to overlook operations, like close.
+// baseSql: the main sql body, provide query logic.
+// conditionAndLimitPart: the sql condition body and limit part.
+// scan: this revoke function to scan result rows.
+// values: the values to replace sql placeholders
+func (p *Storage) RawScan(baseSql string, conditionAndLimitPart string, scan func(rows *sql.Rows) error, values ...interface{}) error {
+	rows, err := p.DB.Raw(baseSql+conditionAndLimitPart, values...).Rows()
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	exist := false
+	for rows.Next() {
+		exist = true
+		err = scan(rows)
+		if err != nil {
+			return err
+		}
+	}
+	if !exist {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }
 
 func (p *Storage) SaveOrCreate(params map[string]string, data interface{}) error {
