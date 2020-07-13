@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"strings"
 )
 
 type Storage struct {
@@ -67,6 +68,37 @@ func (p *Storage) RawScan(baseSql string, conditionAndLimitPart string, scan fun
 	}
 	if !exist {
 		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+// GetLastID: get table last primary id by table and primaryName
+func (p *Storage) GetLastID(table string, primaryName string) (uint, error) {
+	row := p.DB.Raw("SELECT `" + primaryName + "` FROM `" + table + "`   ORDER BY `" + table + "`.`" + primaryName + "` DESC LIMIT 1").Row()
+	lastId := uint(0)
+	err := row.Scan(&lastId)
+	if err != nil {
+		return 0, err
+	}
+	return lastId, nil
+
+}
+
+func (p *Storage) BatchInsert(baseSql string, valueFmt string, batchSize int, values [][]interface{}) error {
+	var tValueFmts []string
+	var tValues []interface{}
+	var err error
+	for i, vls := range values {
+		tValues = append(tValues, vls...)
+		tValueFmts = append(tValueFmts, valueFmt)
+		if i != 0 && len(tValueFmts) > 0 && (i == len(values) || i%batchSize == 0) {
+			err = p.DB.Raw(baseSql+strings.Join(tValueFmts, ","), tValues...).Error
+			if err != nil {
+				return err
+			}
+			tValues = []interface{}{}
+			tValueFmts = []string{}
+		}
 	}
 	return nil
 }
