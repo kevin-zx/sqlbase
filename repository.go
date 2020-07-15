@@ -99,7 +99,7 @@ func (p *Storage) BatchInsert(baseSql string, valueFmt string, batchSize int, va
 	for i, vls := range values {
 		tValues = append(tValues, vls...)
 		tValueFmts = append(tValueFmts, valueFmt)
-		if i != 0 && len(tValueFmts) > 0 && (i == len(values) || i%batchSize == 0) {
+		if i != 0 && len(tValueFmts) > 0 && (i == len(values)-1 || i%batchSize == 0) {
 			err = p.DB.Raw(baseSql+strings.Join(tValueFmts, ","), tValues...).Error
 			if err != nil {
 				return err
