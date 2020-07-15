@@ -83,7 +83,7 @@ func (p *Storage) GetLastID(table string, primaryName string) (uint, error) {
 	err := row.Scan(&lastId)
 	// if table is empty return 0
 	if err != nil && err.Error() == "sql: no rows in result set" {
-		return 0,nil
+		return 0, nil
 	}
 	if err != nil {
 		return 0, err
@@ -99,7 +99,7 @@ func (p *Storage) BatchInsert(baseSql string, valueFmt string, batchSize int, va
 	for i, vls := range values {
 		tValues = append(tValues, vls...)
 		tValueFmts = append(tValueFmts, valueFmt)
-		if i != 0 && len(tValueFmts) > 0 && (i == len(values)-1 || i%batchSize == 0) {
+		if len(tValueFmts) > 0 && (i == len(values)-1 || (i%batchSize == 0 && i != 0)) {
 			err = p.DB.Raw(baseSql+strings.Join(tValueFmts, ","), tValues...).Error
 			if err != nil {
 				return err
