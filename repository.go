@@ -74,9 +74,17 @@ func (p *Storage) RawScan(baseSql string, conditionAndLimitPart string, scan fun
 
 // GetLastID: get table last primary id by table and primaryName
 func (p *Storage) GetLastID(table string, primaryName string) (uint, error) {
+	if primaryName == "" {
+		primaryName = "id"
+	}
 	row := p.DB.Raw("SELECT `" + primaryName + "` FROM `" + table + "`   ORDER BY `" + table + "`.`" + primaryName + "` DESC LIMIT 1").Row()
 	lastId := uint(0)
+
 	err := row.Scan(&lastId)
+	// if table is empty return 0
+	if err != nil && err.Error() == "sql: no rows in result set" {
+		return 0,nil
+	}
 	if err != nil {
 		return 0, err
 	}
