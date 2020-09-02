@@ -3,8 +3,8 @@ package sqlbase
 import (
 	"database/sql"
 	"fmt"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 	"strings"
 )
 
@@ -15,8 +15,11 @@ type Storage struct {
 func NewStorage(engine string, port int, dbName string,
 	user string, host string, passWd string) (*Storage, error) {
 	var err error
-	db, err := gorm.Open(engine, fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8&parseTime=True&loc=Local",
-		user, passWd, host, port, dbName))
+	//dsn := "user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
+	dsn:=fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		user, passWd, host, port, dbName)
+
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +29,7 @@ func NewStorage(engine string, port int, dbName string,
 }
 
 func (p *Storage) Close() {
-	_ = p.DB.Close()
+	// nothing
 }
 
 func (p *Storage) Search(dbType interface{}, params map[string]string, needCount bool, preLoads []string, data interface{}) (int, error) {
@@ -38,12 +41,12 @@ func (p *Storage) Search(dbType interface{}, params map[string]string, needCount
 		queryDb = queryDb.Preload(load)
 	}
 	queryDb, q := ConvertParams2DbQuery(queryDb, params)
-	c := 0
+	var c int64 = 0
 	if needCount {
 		queryDb = queryDb.Count(&c)
 	}
 	err := addAssistQuery(queryDb, q).Find(data).Error
-	return c, err
+	return int(c), err
 }
 
 // RawScan this method can execute raw sql and use the scan function to scan rows
@@ -125,6 +128,6 @@ func (p *Storage) Delete(dbType interface{}, params map[string]string) (rowsAffe
 	return
 }
 
-func (p *Storage) Update(data interface{}) error {
-	return p.DB.Update(data).Error
-}
+//func (p *Storage) Update(data interface{}) error {
+//	return p.DB.Update(data).Error
+//}

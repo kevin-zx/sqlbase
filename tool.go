@@ -1,7 +1,7 @@
 package sqlbase
 
 import (
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 	"strconv"
 	"strings"
 )
